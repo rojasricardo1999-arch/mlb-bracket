@@ -1,0 +1,256 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bracket MLB 2025 – Interactivo (móvil)</title>
+  <style>
+    :root {
+      /* tamaño adaptable de los logos */
+      --slot-size: clamp(42px, 7.2vw, 84px);
+      --ring: 3px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, Arial, sans-serif; background:#0b1220; color:#fff; }
+
+    .toolbar {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      padding: 10px; background: rgba(5,10,18,.9); backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .toolbar button, .toolbar label {
+      font: inherit; color:#fff; background:#1a2847; border:1px solid rgba(255,255,255,.15);
+      padding:8px 12px; border-radius:12px; cursor:pointer; user-select:none;
+    }
+    .toolbar input[type="file"]{ display:none; }
+
+    .stage {
+      position: relative; max-width: 1000px; margin: 0 auto; width: 100%;
+      touch-action: none; /* evitamos scroll accidental al arrastrar */
+    }
+    .stage img.bg {
+      width: 100%; display: block; pointer-events: none; user-select: none;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    /* Logo suelto sobre el lienzo */
+    .placed, .palette .logo {
+      width: var(--slot-size); height: var(--slot-size);
+      border-radius: 50%; background: #fff; display: grid; place-items: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,.35);
+    }
+    .placed { position: absolute; transform: translate(-50%, -50%); border: var(--ring) solid rgba(255,255,255,.25); }
+    .placed img, .palette .logo img { max-width: 78%; max-height: 78%; pointer-events: none; }
+
+    .dragging { opacity:.9; position: fixed; left:0; top:0; transform: translate(-50%, -50%); z-index: 1000; }
+
+    .palette { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 10px; padding: 12px; max-width: 1000px; margin: 8px auto 28px; }
+
+    .hint { text-align:center; opacity:.8; font-size:.95rem; margin: 8px 0 6px; }
+    .muted { opacity:.65; }
+
+    /* botones pequeños en los logos colocados */
+    .chip {
+      position:absolute; right:-8px; top:-8px; width: 26px; height: 26px; border-radius: 50%;
+      background:#16233f; color:#fff; border:1px solid rgba(255,255,255,.25);
+      display:grid; place-items:center; font-size:14px; line-height:1; cursor:pointer;
+    }
+
+    /* resalta cuando el puntero está dentro del lienzo */
+    .stage.drop-armed { outline: 2px dashed rgba(255,255,255,.25); outline-offset: 6px; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <label>
+      📷 Cargar imagen
+      <input id="bgFile" type="file" accept="image/*" />
+    </label>
+    <button id="saveBtn">💾 Guardar</button>
+    <button id="loadBtn">📂 Cargar</button>
+    <button id="clearBtn">🧹 Limpiar</button>
+    <span class="muted">Arrastra un logo y suéltalo directamente sobre el círculo vacío del bracket.</span>
+  </div>
+
+  <div id="stage" class="stage">
+    <!-- TIP: reemplaza el src con tu archivo local si lo hospedas junto al HTML -->
+    <img id="bg" class="bg" alt="Bracket MLB 2025" src="MLB-Postemporada-2025-POST.png" />
+    <!-- Los logos que coloques aparecerán aquí como .placed -->
+  </div>
+
+  <p class="hint">Si la imagen no se ve, pulsa <strong>“Cargar imagen”</strong> y selecciona tu archivo del teléfono. Se guardará para la próxima vez.</p>
+
+  <div class="palette" id="palette">
+    <!-- Liga Americana -->
+    <div class="logo" data-team="tigers"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/det.png" alt="Tigers" /></div>
+    <div class="logo" data-team="guardians"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/cle.png" alt="Guardians" /></div>
+    <div class="logo" data-team="mariners"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/sea.png" alt="Mariners" /></div>
+    <div class="logo" data-team="redsox"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/bos.png" alt="Red Sox" /></div>
+    <div class="logo" data-team="yankees"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/nyy.png" alt="Yankees" /></div>
+    <div class="logo" data-team="bluejays"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/tor.png" alt="Blue Jays" /></div>
+    <!-- Liga Nacional -->
+    <div class="logo" data-team="phillies"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/phi.png" alt="Phillies" /></div>
+    <div class="logo" data-team="dodgers"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/lad.png" alt="Dodgers" /></div>
+    <div class="logo" data-team="reds"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/cin.png" alt="Reds" /></div>
+    <div class="logo" data-team="padres"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/sd.png" alt="Padres" /></div>
+    <div class="logo" data-team="cubs"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/chc.png" alt="Cubs" /></div>
+    <div class="logo" data-team="brewers"><img src="https://a.espncdn.com/i/teamlogos/mlb/500/mil.png" alt="Brewers" /></div>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const bg = document.getElementById('bg');
+    const palette = document.getElementById('palette');
+
+    /* Utilidades */
+    const LS_KEY = 'mlb-bracket-2025';
+    const $ = (s, el = document) => el.querySelector(s);
+    const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+
+    function toPercentCoords(clientX, clientY){
+      const r = stage.getBoundingClientRect();
+      let x = ((clientX - r.left) / r.width) * 100;
+      let y = ((clientY - r.top) / r.height) * 100;
+      // limitar dentro del lienzo
+      x = Math.min(100, Math.max(0, x));
+      y = Math.min(100, Math.max(0, y));
+      return {x, y};
+    }
+
+    function placeLogo(src, alt, x, y){
+      const d = document.createElement('div');
+      d.className = 'placed';
+      d.style.left = x + '%';
+      d.style.top  = y + '%';
+      d.dataset.src = src; d.dataset.alt = alt;
+      const img = document.createElement('img');
+      img.alt = alt; img.src = src; d.appendChild(img);
+      // botón borrar
+      const del = document.createElement('div');
+      del.className = 'chip'; del.title = 'Eliminar'; del.textContent = '×';
+      del.addEventListener('click', (e)=>{ e.stopPropagation(); d.remove(); autoSave(); });
+      d.appendChild(del);
+      // hacer draggable dentro del stage
+      makeDraggable(d, { constrainToStage: true });
+      stage.appendChild(d);
+      autoSave();
+      return d;
+    }
+
+    function serialize(){
+      const bgData = localStorage.getItem(LS_KEY+'-bg') || bg.getAttribute('src');
+      const items = $$('.placed', stage).map(n=>({ src:n.dataset.src, alt:n.dataset.alt, x:parseFloat(n.style.left), y:parseFloat(n.style.top) }));
+      return { bg: bgData, items };
+    }
+    function save(){ localStorage.setItem(LS_KEY, JSON.stringify(serialize())); }
+    function autoSave(){ // auto-guardar suavemente
+      clearTimeout(save._t); save._t = setTimeout(save, 300);
+    }
+    function load(){
+      const raw = localStorage.getItem(LS_KEY); if(!raw) return;
+      const data = JSON.parse(raw);
+      if(data.bg){ bg.crossOrigin = 'anonymous'; bg.src = data.bg; }
+      $$('.placed', stage).forEach(n=>n.remove());
+      (data.items||[]).forEach(it=> placeLogo(it.src, it.alt, it.x, it.y));
+    }
+
+    // Cargar imagen de fondo desde archivo (y guardarla como DataURL para persistir)
+    $('#bgFile').addEventListener('change', (e)=>{
+      const f = e.target.files[0]; if(!f) return;
+      const fr = new FileReader();
+      fr.onload = ()=>{
+        const dataUrl = fr.result; // persistible
+        bg.crossOrigin = 'anonymous';
+        bg.src = dataUrl;
+        localStorage.setItem(LS_KEY+'-bg', dataUrl);
+        autoSave();
+      };
+      fr.readAsDataURL(f);
+    });
+
+    // Botones
+    $('#saveBtn').addEventListener('click', save);
+    $('#loadBtn').addEventListener('click', load);
+    $('#clearBtn').addEventListener('click', ()=>{
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_KEY+'-bg');
+      $$('.placed', stage).forEach(n=>n.remove());
+    });
+
+    // Arrastrar desde la paleta con Pointer Events (soporte móvil + desktop)
+    function makeGhostFromLogo(logoEl){
+      const img = logoEl.querySelector('img');
+      const ghost = document.createElement('div');
+      ghost.className = 'placed dragging';
+      const gimg = document.createElement('img'); gimg.src = img.src; gimg.alt = img.alt; ghost.appendChild(gimg);
+      document.body.appendChild(ghost);
+      return {ghost, src: img.src, alt: img.alt};
+    }
+
+    function armStageHighlight(on){ stage.classList.toggle('drop-armed', !!on); }
+
+    function attachPaletteDrag(){
+      $$('.palette .logo').forEach(el=>{
+        el.addEventListener('pointerdown', (ev)=>{
+          el.setPointerCapture(ev.pointerId);
+          const {ghost, src, alt} = makeGhostFromLogo(el);
+          const move = (e)=>{
+            ghost.style.left = e.clientX + 'px';
+            ghost.style.top  = e.clientY + 'px';
+            const r = stage.getBoundingClientRect();
+            const inside = e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom;
+            armStageHighlight(inside);
+          };
+          const up = (e)=>{
+            document.removeEventListener('pointermove', move);
+            document.removeEventListener('pointerup', up);
+            ghost.remove(); armStageHighlight(false);
+            // ¿cayó en el stage?
+            const rect = stage.getBoundingClientRect();
+            if(e.clientX>=rect.left && e.clientX<=rect.right && e.clientY>=rect.top && e.clientY<=rect.bottom){
+              const {x,y} = toPercentCoords(e.clientX, e.clientY);
+              placeLogo(src, alt, x, y);
+            }
+          };
+          document.addEventListener('pointermove', move);
+          document.addEventListener('pointerup', up, {once:true});
+        });
+      });
+    }
+
+    // Hacer cualquier elemento .placed draggable dentro del stage
+    function makeDraggable(node, { constrainToStage=false }={}){
+      node.style.touchAction = 'none';
+      node.addEventListener('pointerdown', (ev)=>{
+        if(ev.target.closest('.chip')) return; // no iniciar si pulsó el botón X
+        node.setPointerCapture(ev.pointerId);
+        const start = { x: ev.clientX, y: ev.clientY };
+        const init = { left: parseFloat(node.style.left), top: parseFloat(node.style.top) };
+        const move = (e)=>{
+          const r = stage.getBoundingClientRect();
+          let x = ((e.clientX - r.left) / r.width) * 100;
+          let y = ((e.clientY - r.top) / r.height) * 100;
+          if(constrainToStage){ x = Math.min(100, Math.max(0, x)); y = Math.min(100, Math.max(0, y)); }
+          node.style.left = x + '%';
+          node.style.top  = y + '%';
+        };
+        const up = ()=>{
+          document.removeEventListener('pointermove', move);
+          document.removeEventListener('pointerup', up);
+          autoSave();
+        };
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+      });
+    }
+
+    // Inicializar
+    attachPaletteDrag();
+    // Intenta cargar estado guardado
+    load();
+  </script>
+</body>
+</html>
+```
